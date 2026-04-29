@@ -1,45 +1,53 @@
 import axios from "axios";
-import type { Note, NewNote } from "../types/note";
-import type { FetchNotesResponse, FetchNotesParams } from "../types/api";
+import type { Note, CreateNoteRequest } from "../types/note";
+
+const BASE_URL = "https://notehub-public.goit.study/api";
+
+const token = process.env.NEXT_PUBLIC_NOTEHUB_TOKEN;
 
 const api = axios.create({
-  baseURL: "https://notehub-public.goit.study/api",
+  baseURL: BASE_URL,
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
 });
 
-api.interceptors.request.use((config) => {
-  const token = process.env.NEXT_PUBLIC_NOTEHUB_TOKEN;
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+export interface FetchNotesResponse {
+    notes: Note[];
+    totalPages: number;
+}
 
 export const fetchNotes = async (
-  params: FetchNotesParams = {},
+  page: number,
+  perPage: number,
+  search: string = "",
+  tag?: string
 ): Promise<FetchNotesResponse> => {
-  const requestParams = { ...params };
-
-  if (requestParams.tag === "all" || !requestParams.tag) {
-    delete requestParams.tag;
-  }
-
-  const { data } = await api.get<FetchNotesResponse>("/notes", {
-    params: requestParams,
+  const response = await api.get<FetchNotesResponse>("/notes", {
+    params: {
+      page,
+      perPage,
+      search,
+      tag,
+    },
   });
-  return data;
+
+  return response.data;
 };
 
-export const createNote = async (newNote: NewNote): Promise<Note> => {
-  const { data } = await api.post<Note>("/notes", newNote);
-  return data;
+export const createNote = async (
+  note: CreateNoteRequest
+): Promise<Note> => {
+  const response = await api.post<Note>("/notes", note);
+  return response.data;
 };
 
 export const deleteNote = async (id: string): Promise<Note> => {
-  const { data } = await api.delete<Note>(`/notes/${id}`);
-  return data;
+  const response = await api.delete<Note>(`/notes/${id}`);
+  return response.data;
 };
 
 export const fetchNoteById = async (id: string): Promise<Note> => {
-  const { data } = await api.get<Note>(`/notes/${id}`);
-  return data;
+  const response = await api.get<Note>(`/notes/${id}`);
+  return response.data;
 };
